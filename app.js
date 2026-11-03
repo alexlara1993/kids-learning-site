@@ -89,7 +89,7 @@ const VIEWS = {
           <span class="ic">${st === 'locked' ? '🔒' : k.icon}</span><span class="nm">${k.name}<small>${sub2}</small>${st !== 'locked' ? `<div class="bar"><i style="width:${st === 'mastered' ? 100 : r.c / WINDOW * 100}%"></i></div>` : ''}</span>
           <span style="font-size:1.6rem">${st === 'mastered' ? '⭐' : st === 'locked' ? '' : '▶️'}</span></button>`; }).join('')}</div>`;
     app.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { S.subject = b.dataset.s; go('map'); });
-    app.querySelectorAll('.skill').forEach(b => b.onclick = () => { const i = +b.dataset.i; if (status(p, sub, i) === 'locked') return toast('Master the skill before it to unlock this one! 🔒'); S.skill = sk[i]; go('practice'); });
+    app.querySelectorAll('.skill').forEach(b => b.onclick = () => { const i = +b.dataset.i; if (status(p, sub, i) === 'locked') return toast('Master the skill before it to unlock this one! 🔒'); openSkill(sk[i]); });
   },
   practice() {
     const p = prof(), k = S.skill, s = sp(p, k.id); S.q = k.gen();
@@ -98,13 +98,26 @@ const VIEWS = {
       const r = recent(s), wasM = s.mastered;
       if (!wasM && r.n >= WINDOW && r.c >= NEED) { s.mastered = true; }
       save(); updateDots(s);
+      if (!ok && s.history.length >= 3 && s.history.slice(-3).every(x => !x)) { const n = document.createElement('div'); n.className = 'nudge'; n.dataset.testid = 'nudge';
+        n.innerHTML = `Tricky one! 🤗 Want to look at the lesson again? <button class="secondary" style="min-height:44px;margin-left:8px">📖 Review lesson</button>`; n.querySelector('button').onclick = () => go('lesson'); $('#fb').after(n); }
       if (s.mastered && !wasM) { const sk = skillsOf(S.subject), i = sk.indexOf(k), nx = sk[i + 1];
         if (nx) sp(p, nx.id).unlocked = true; save();
         setTimeout(() => overlay(`<div class="big">🏆</div><h2>You mastered ${k.name}!</h2><p>New badge earned! ${nx ? `Next up: <b>${nx.icon} ${nx.name}</b> is unlocked!` : 'You finished the whole path! 🎓'}</p>
           <div class="row"><button class="secondary" id="ov2" data-testid="back-map">Skill map</button>${nx ? `<button class="ok" id="ov" data-testid="next-skill">Next skill ▶️</button>` : ''}</div>`,
-          () => { S.skill = nx; go('practice'); }, () => go('map')), 600);
+          () => openSkill(nx), () => go('map')), 600);
       }
     }, false, s);
+  },
+  lesson() {
+    const p = prof(), k = S.skill, L = LESSONS[k.id], s = sp(p, k.id); s.lessonViewed = true; s.lessonViews = (s.lessonViews || 0) + 1; save(); setTitle(`${p.avatar} ${p.name}`);
+    const text = [L.say, ...L.ex.flat()].join('. ').replace(/[^\w\s.,'"?!%¢+−×÷=/-]/gu, ' ');
+    app.innerHTML = `<div class="lesson" data-testid="lesson" data-skill="${k.id}"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <button class="secondary" id="back" style="min-height:48px">⬅</button><b>📖 Lesson</b><span style="width:48px"></span></div>
+      <h2>${k.icon} ${k.name}</h2><div class="card"><p class="say">${esc(L.say)}</p><div class="vis">${L.vis}</div>
+      <button class="secondary" id="read" data-testid="read-to-me">🔊 Read to me</button></div>
+      ${L.ex.map(([t, ...st], j) => `<div class="card example"><b>Example ${j + 1}: ${esc(t)}</b><ol>${st.map((x, i) => `<li style="animation-delay:${0.4 + j * 0.6 + i * 0.5}s">${esc(x)}</li>`).join('')}</ol></div>`).join('')}
+      <div class="row"><button class="ok" id="go" data-testid="start-practice" style="font-size:1.4rem">Let's practice! 🚀</button></div></div>`;
+    $('#back').onclick = () => go('map'); $('#read').onclick = () => say(text); $('#go').onclick = () => { speechSynthesis && speechSynthesis.cancel(); go('practice'); };
   },
   pin() {
     setTitle('Parents'); let v = '';
@@ -119,9 +132,9 @@ const VIEWS = {
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-size:2.4rem">${p.avatar}</span><h3 style="margin:0;flex:1">${esc(p.name)}</h3>
       <span>⭐ ${p.stars} · 🏅 ${badgeCount(p)}</span>
       <select data-lvl="${p.id}" style="width:auto"><option value="">Start level…</option>${GRADES.map(g => `<option ${p.level === g ? 'selected' : ''} value="${g}">${g === 'K' ? 'Kinder' : 'Grade ' + g}</option>`).join('')}</select></div>
-      ${Object.entries(SUBJECTS).map(([sub, S2]) => `<h4>${S2.icon} ${S2.name}</h4><div style="overflow-x:auto"><table><tr><th>Skill</th><th>Gr</th><th>Status</th><th>Recent</th><th>All-time</th><th></th></tr>
+      ${Object.entries(SUBJECTS).map(([sub, S2]) => `<h4>${S2.icon} ${S2.name}</h4><div style="overflow-x:auto"><table><tr><th>Skill</th><th>Gr</th><th>Status</th><th>Recent</th><th>All-time</th><th>Lesson</th><th></th></tr>
         ${S2.skills.map((k, i) => { const st = status(p, sub, i), s = p.progress[k.id], r = s ? recent(s) : { n: 0, c: 0 };
-          return `<tr><td>${k.icon} ${k.name}</td><td>${k.grade}</td><td>${st === 'mastered' ? '🏅 mastered' : st === 'locked' ? '🔒 locked' : '🟢 open'}</td><td>${r.c}/${r.n}</td><td>${s && s.total ? Math.round(s.correct / s.total * 100) + '% of ' + s.total : '—'}</td>
+          return `<tr><td>${k.icon} ${k.name}</td><td>${k.grade}</td><td>${st === 'mastered' ? '🏅 mastered' : st === 'locked' ? '🔒 locked' : '🟢 open'}</td><td>${r.c}/${r.n}</td><td>${s && s.total ? Math.round(s.correct / s.total * 100) + '% of ' + s.total : '—'}</td><td>${s && s.lessonViewed ? '📖 ✓' : '—'}</td>
           <td>${st === 'locked' ? `<button data-act="unlock" data-p="${p.id}" data-k="${k.id}" data-testid="unlock-${p.name}-${k.id}">Unlock</button>` : ''}${st !== 'mastered' && st !== 'locked' ? ` <button class="ok" data-act="master" data-p="${p.id}" data-k="${k.id}">Mark mastered</button>` : ''}${s ? ` <button class="danger" data-act="reset" data-p="${p.id}" data-k="${k.id}">Reset</button>` : ''}</td></tr>`; }).join('')}</table></div>`).join('')}
       <div class="row"><button class="danger" data-act="resetall" data-p="${p.id}">Reset all progress</button>${DB.profiles.length > 1 ? `<button class="secondary" data-act="delete" data-p="${p.id}">Remove learner</button>` : ''}</div></div>`).join('')}
       <div class="card"><h3>Settings</h3><label>Change PIN <input id="newpin" inputmode="numeric" maxlength="8" placeholder="New PIN"></label><div class="row"><button id="savepin">Save PIN</button><button class="secondary" id="lock">Lock & exit</button></div></div>`;
@@ -138,17 +151,18 @@ const VIEWS = {
   },
 };
 
+function openSkill(k) { S.skill = k; const s = prof().progress[k.id]; go(s && s.lessonViewed ? 'practice' : 'lesson'); }
 function renderQ(q, label, onAnswer, placement, s) {
   S.answered = false;
   app.innerHTML = `<div class="q" data-testid="question" data-answer="${esc(q.answer)}"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-      <button class="secondary" id="back" style="min-height:48px">⬅</button><b>${esc(label)}</b>${q.speak ? `<button class="secondary" id="say" aria-label="Hear it" style="min-height:48px">🔊</button>` : '<span style="width:48px"></span>'}</div>
+      <button class="secondary" id="back" style="min-height:48px">⬅</button><b>${esc(label)}</b>${placement ? '' : `<button class="secondary" id="help" data-testid="help" style="min-height:48px">📖 Help</button>`}${q.speak ? `<button class="secondary" id="say" aria-label="Hear it" style="min-height:48px">🔊</button>` : '<span style="width:48px"></span>'}</div>
     ${s ? `<div class="dots" id="dots"></div>` : ''}
     ${q.passage ? `<div class="card passage" data-testid="passage"><b>${esc(q.passage.title)}</b><p>${esc(q.passage.text)}</p></div>` : ''}
     ${q.visual ? `<div class="visual">${q.visual}</div>` : ''}<div class="prompt">${esc(q.prompt)}</div>
     <div class="choices">${q.choices.map(c => `<button data-c="${esc(c)}" data-testid="choice">${esc(c)}</button>`).join('')}</div>
     <div class="feedback" id="fb"></div><div class="row" id="nextRow"></div></div>`;
   if (s) updateDots(s);
-  $('#back').onclick = () => go(placement ? 'level' : 'map');
+  $('#back').onclick = () => go(placement ? 'level' : 'map'); if (!placement) $('#help').onclick = () => go('lesson');
   if (q.speak) { $('#say').onclick = () => say(q.speak); if (!placement) setTimeout(() => say(q.speak), 300); }
   app.querySelectorAll('[data-c]').forEach(b => b.onclick = () => {
     if (S.answered) return; S.answered = true; const ok = b.dataset.c === q.answer;

@@ -46,3 +46,17 @@ td button{min-height:40px;padding:6px 10px;font-size:.9rem}
 .avpick{display:flex;flex-wrap:wrap;gap:8px}.avpick button{font-size:2rem;background:#f1f2f6;min-width:64px}.avpick button.on{background:var(--gold)}
 @media(max-width:480px){.choices button{font-size:1.25rem;min-height:72px}.q .prompt{font-size:1.4rem}}
 #overlay[hidden]{display:none}
+.lesson{text-align:center}.lesson .say{font-size:1.35rem;line-height:1.5;font-weight:700}
+.vis{margin:14px 0;padding:14px;background:#f8f9ff;border-radius:16px;overflow-x:auto}
+.vis-objs{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}.vis-objs span{font-size:2.4rem;display:flex;flex-direction:column;align-items:center}.vis-objs small{font-size:1rem;font-weight:800;color:var(--pri)}
+.nline{display:flex;justify-content:center;border-top:4px solid var(--ink);padding-top:4px;margin:16px auto;max-width:560px}.nline span{flex:1;font-weight:800;font-size:1.2rem;position:relative;padding-top:6px}
+.nline span:before{content:'';position:absolute;top:-12px;left:50%;width:3px;height:12px;background:var(--ink)}.nline .st{color:#fff;background:var(--pri);border-radius:10px}.nline .hop{color:var(--ok)}.nline .hop:after{content:'⤴';position:absolute;top:-40px;left:30%;font-size:1.4rem}
+.fbar{display:flex;max-width:360px;height:54px;margin:8px auto;border:3px solid var(--ink);border-radius:10px;overflow:hidden}.fbar span{flex:1;border-right:3px solid var(--ink)}.fbar span:last-child{border:0}
+.cap{font-weight:800;font-size:1.3rem}
+.pv{display:flex;gap:24px;justify-content:center;align-items:flex-end;margin-bottom:8px}.pv div{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end}
+.pv .ten{display:block;width:16px;height:120px;background:repeating-linear-gradient(#4b7bec 0 10px,#fff 10px 12px);border:2px solid #3867d6}.pv .one{display:block;width:16px;height:12px;background:#fd9644;border:2px solid #fa8231}
+.groups{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}.groups span{font-size:1.8rem;border:3px dashed var(--pri);border-radius:16px;padding:6px 10px}
+.vis-big{font-size:1.9rem;font-weight:800}.colmath{font-size:1.8rem;font-weight:800;display:inline-block;text-align:right;margin:0;font-family:ui-monospace,monospace}
+.example{text-align:left;background:#fffdf6;border-left:6px solid var(--gold);margin:12px 0}.example ol{font-size:1.2rem;line-height:1.6;padding-left:26px;margin:6px 0}
+.example li{opacity:0;animation:fadein .4s forwards}@keyframes fadein{to{opacity:1}}
+.nudge{background:#ffeaa7;border-radius:14px;padding:10px;font-weight:700;margin-top:10px}
